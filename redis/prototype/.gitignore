@@ -1,0 +1,7 @@
+# Out-of-source CMake builds
+/build*/
+/cmake-build*/
+
+# Files produced by an in-source build
+/Makefile
+/study-store

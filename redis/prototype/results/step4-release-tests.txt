@@ -1,0 +1,32 @@
+UpdateCTestConfiguration  from :/tmp/redis-study-release/DartConfiguration.tcl
+Test project /tmp/redis-study-release
+Constructing a list of tests
+Done constructing a list of tests
+Updating test list for fixtures
+Added 0 tests to meet fixture requirements
+Checking test dependency graph...
+Checking test dependency graph end
+test 1
+    Start 1: integration
+
+1: Test command: /home/moadabdou/miniconda3/bin/python3.13 "/home/moadabdou/coding/serious_projects/system_design/redis/prototype/tests/integration.py" "/tmp/redis-study-release/study-store"
+1: Working Directory: /tmp/redis-study-release
+1: Test timeout computed to be: 60
+1: test_01_string_commands_and_single_thread (__main__.Integration.test_01_string_commands_and_single_thread) ... ok
+1: test_02_fragmentation_pipeline_order_and_half_close (__main__.Integration.test_02_fragmentation_pipeline_order_and_half_close) ... ok
+1: test_03_malformed_and_truncated_frames (__main__.Integration.test_03_malformed_and_truncated_frames) ... ok
+1: test_04_concurrent_idle_and_slow_clients (__main__.Integration.test_04_concurrent_idle_and_slow_clients) ... ok
+1: test_05_command_validation_preserves_existing_value (__main__.Integration.test_05_command_validation_preserves_existing_value) ... ok
+1: test_06_abrupt_disconnect_and_reused_descriptors (__main__.Integration.test_06_abrupt_disconnect_and_reused_descriptors) ... ok
+1: test_07_restart_starts_with_empty_memory (__main__.Integration.test_07_restart_starts_with_empty_memory) ... ok
+1: test_08_cli_and_later_phase_features_are_unavailable (__main__.Integration.test_08_cli_and_later_phase_features_are_unavailable) ... ok
+1:
+1: ----------------------------------------------------------------------
+1: Ran 8 tests in 0.178s
+1:
+1: OK
+1/1 Test #1: integration ......................   Passed    0.35 sec
+
+100% tests passed out of 1
+
+Total Test time (real) =   0.35 sec

@@ -8,6 +8,10 @@ behind each decision before comparing the design with Redis itself.
 
 This is an architecture study, not an attempt to implement all of Redis.
 
+The first implementation covers step 4 of the study process: a minimal event-loop
+prototype with GET, SET, and DEL. Expiration, eviction, persistence, replication,
+and sharding stay in documentation until their individual study phases begin.
+
 ## In Scope
 
 - Basic key-value operations: `GET`, `SET`, and `DEL`, initially with string values.
