@@ -1,7 +1,7 @@
 # Key Expiration: Implementation and Results
 
-Issue #2 extends the single-node prototype with TTLs. Dataset capacity limits
-and eviction remain issue #3. The [decision record](design-tradeoffs.md#key-expiration-decision-issue-2)
+Issue #2 extends the single-node prototype with TTLs. The subsequent
+[memory extension](memory-limits-report.md) implements issue #3. The [decision record](design-tradeoffs.md#key-expiration-decision-issue-2)
 defines alternatives, costs, and semantics before the implementation.
 
 ## Client Behavior

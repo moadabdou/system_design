@@ -10,7 +10,7 @@ This is an architecture study, not an attempt to implement all of Redis.
 
 The first implementation covered step 4 of the study process: a minimal event-loop
 prototype with GET, SET, and DEL. The current bounded-memory stage adds key
-expiration; dataset memory limits and eviction are next. Persistence, replication,
+expiration, dataset memory limits, and optional LRU eviction. Persistence, replication,
 and sharding stay in documentation until their individual study phases begin.
 
 ## In Scope

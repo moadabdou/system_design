@@ -3,7 +3,8 @@
 Status: outline; small experiments can accompany every earlier step.
 
 Completed observations: [minimal baseline](implementation-report.md#initial-performance-and-memory-observations)
-and [expiration burst](expiration-report.md#expiration-burst-experiment).
+and [expiration burst](expiration-report.md#expiration-burst-experiment), plus
+[memory pressure](memory-limits-report.md).
 
 Start with a single-threaded, nonblocking TCP prototype supporting GET, SET, and
 DEL. Use it to check event-loop behavior before adding storage and distribution

@@ -1,6 +1,7 @@
 # Step 5: Investigate Design Trade-offs
 
-Status: expiration design selected below; other concerns remain open.
+Status: expiration, [memory limits and eviction](memory-limits-design.md) are
+implemented. Other concerns remain open.
 
 Extend the design one concern at a time. For each concern, describe the problem,
 compare alternatives, choose an approach, and record its costs and guarantees.
@@ -65,4 +66,5 @@ Validate exact deadline boundaries using an explicit test time, plus socket-leve
 replacement/validation tests. An expiration-burst experiment will probe PING
 latency while untouched TTL values become due and sample process RSS. Store tests
 must verify actual entry/index reclamation: allocator-retained RSS alone cannot
-prove whether keys remain resident. Dataset limits and eviction remain issue #3.
+prove whether keys remain resident. The [memory limits design](memory-limits-design.md)
+extends this cleanup with bounded write admission and optional LRU eviction.

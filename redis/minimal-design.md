@@ -6,8 +6,8 @@ paths. The [C++ prototype](prototype/README.md) implements this baseline; the
 
 The first implementation supports GET, SET, and DEL over nonblocking TCP, plus
 PING for readiness. The current prototype also adds
-[key expiration](expiration-report.md). Eviction, persistence, replication, and
-sharding remain later study phases. The broader [requirements](requirements-and-capacity.md)
+[key expiration](expiration-report.md) and [memory limits with optional LRU eviction](memory-limits-design.md).
+Persistence, replication, and sharding remain later study phases. The broader [requirements](requirements-and-capacity.md)
 provide context for those later phases.
 
 ## Architecture
@@ -114,7 +114,8 @@ A successful SET confirms an update in memory. A crash or restart loses the
 entire dataset. Losing the connection before a response leaves the command's
 outcome uncertain to the client.
 
-The dataset has no configured capacity or eviction policy. Bounded dataset
-memory, persistence, replication/failover, and sharding belong to the
+The current dataset defaults to a 64 MiB accounted budget with write rejection;
+LRU eviction is optional. Client buffers and temporary allocations need separate
+headroom. Persistence, replication/failover, and sharding belong to the
 [following phases](design-tradeoffs.md). They have documentation outlines and
 future issues, with no implementation hooks in this baseline.

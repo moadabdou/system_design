@@ -23,18 +23,19 @@ def available_port():
 
 
 class TestServer:
-    def __init__(self, directory):
+    def __init__(self, directory, options=()):
         self.port = available_port()
         self.address = f"127.0.0.1:{self.port}"
         self.log_path = Path(directory) / "server.txt"
         self.process = None
         self.output = None
+        self.options = options
         self.start()
 
     def start(self):
         self.output = self.log_path.open("ab", buffering=0)
         self.process = subprocess.Popen(
-            [BINARY, "--port", str(self.port)], stdout=self.output, stderr=self.output
+            [BINARY, "--port", str(self.port), *self.options], stdout=self.output, stderr=self.output
         )
         deadline = time.monotonic() + 5
         try:
@@ -79,10 +80,10 @@ class Integration(unittest.TestCase):
         self.temp.cleanup()
         self.assertFalse(errors, "\n".join(errors))
 
-    def server(self):
+    def server(self, *options):
         directory = Path(self.temp.name) / str(len(self.servers))
         directory.mkdir()
-        server = TestServer(directory)
+        server = TestServer(directory, options)
         self.servers.append(server)
         return server
 
@@ -219,6 +220,44 @@ class Integration(unittest.TestCase):
             sock.close()
             self.assertEqual(server.cmd("PING"), b"PONG")
 
+    def test_memory_rejection_preserves_connection_and_replacement(self):
+        server = self.server("--memory", "600")
+        with Client(server.address) as client:
+            client.command("SET", "a", "a", "PX", 5000)  # 292 bytes
+            client.command("SET", "b", "b" * 114)  # 308 bytes
+            with self.assertRaisesRegex(StoreError, "^OOM memory limit reached$"):
+                client.command("SET", "a", "aa", "PX", 10000)
+            self.assertEqual(client.command("GET", "a"), b"a")
+            with self.assertRaisesRegex(StoreError, "^OOM entry exceeds memory limit$"):
+                client.command("SET", "a", "x" * 601)
+            self.assertEqual(client.command("GET", "a"), b"a")
+            self.assertEqual(client.command("SET", "b", "c" * 114), b"OK")
+            self.assertEqual(client.command("SET", "b", "c"), b"OK")
+            self.assertEqual(client.command("DEL", "a"), 1)
+            self.assertEqual(client.command("SET", "c", "c"), b"OK")
+            self.assertEqual(client.command("PING"), b"PONG")
+
+    def test_lru_eviction_and_work_limit(self):
+        server = self.server("--memory", "585", "--policy", "allkeys-lru")
+        with Client(server.address) as client:
+            for key in ("a", "b", "c"):
+                client.command("SET", key, key)
+            self.assertEqual(client.command("GET", "a"), b"a")
+            client.command("SET", "d", "d")
+            self.assertIsNone(client.command("GET", "b"))
+            self.assertEqual(client.command("DEL", "b"), 0)
+            self.assertEqual(client.command("GET", "a"), b"a")
+        server = self.server("--memory", "40000", "--policy", "allkeys-lru")
+        with Client(server.address) as client:
+            client.socket.sendall(b"".join(encode("SET", f"{i:04d}", "") for i in range(200)))
+            for _ in range(200):
+                self.assertEqual(read(client.stream), b"OK")
+            with self.assertRaisesRegex(StoreError, "^OOM eviction work limit reached$"):
+                client.command("SET", "0000", "x" * 25800)
+            self.assertEqual(client.command("GET", "0000"), b"")
+            self.assertEqual(client.command("GET", "0001"), b"")
+            self.assertEqual(client.command("PING"), b"PONG")
+
     def test_07_restart_starts_with_empty_memory(self):
         server = self.server()
         server.cmd("SET", "key", "acknowledged")
@@ -231,7 +270,12 @@ class Integration(unittest.TestCase):
                  (["--port", "65536"], "invalid port"),
                  (["--port", "not-a-number"], "invalid integer"),
                  (["--port"], "options require values")]
-        for option in ["--replica", "--dir", "--memory", "--policy", "--sync", "--node", "--peers"]:
+        for value in ["0", "-1", "1.5", "abc", "18446744073709551616", ""]:
+            cases.append((["--memory", value], "invalid memory limit"))
+        cases.extend([(["--memory"], "options require values"),
+                      (["--policy", "random"], "invalid memory policy"),
+                      (["--policy"], "options require values")])
+        for option in ["--replica", "--dir", "--sync", "--node", "--peers"]:
             cases.append(([option, "unused"], "unknown option"))
         for args, message in cases:
             with self.subTest(args=args):

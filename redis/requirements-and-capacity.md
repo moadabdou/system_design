@@ -9,8 +9,8 @@ or guarantees. Revise them as experiments provide evidence.
 
 These requirements cover the full study. The first prototype implements only
 GET, SET, and DEL over a single-threaded TCP server. The current prototype also
-supports TTLs through SET PX. Dataset memory policies, persistence, replication,
-and sharding are deferred to later phases.
+supports TTLs through SET PX, a logical dataset budget, and rejection or LRU
+eviction. Persistence, replication, and sharding are deferred to later phases.
 
 ## Functional Requirements
 
@@ -62,6 +62,11 @@ keys separately.
 Use a provisional overhead allowance of 128 bytes per key for metadata, indexes,
 and expiration bookkeeping. Actual overhead depends on the implementation and
 must be measured.
+
+The current prototype uses a separate [logical accounting model](memory-limits-design.md#what-we-count)
+with explicit LRU/TTL key copies and 192/96-byte metadata allowances. The capacity
+estimate below retains its original study assumptions; it has not been validated
+against that implementation or measured at ten million keys.
 
 ```text
 Bytes per entry = 32 + 1,024 + 128 = 1,184 bytes

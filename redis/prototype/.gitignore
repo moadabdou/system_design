@@ -6,3 +6,6 @@
 /Makefile
 /study-store
 /store-expiration-tests
+/store-memory-tests
+/store-allocation-tests
+/memory-pressure

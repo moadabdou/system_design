@@ -1,8 +1,8 @@
 # Redis — System Design Case Study
 
 The current implementation covers the minimal single-threaded TCP store and
-key expiration: GET, SET (optionally PX), and DEL. Dataset memory limits,
-eviction, persistence, replication, and sharding remain future work.
+key expiration, a configurable dataset budget, and optional LRU eviction.
+Persistence, replication, and sharding remain future work.
 
 ## Study Documents
 
@@ -10,6 +10,9 @@ Implementation: [C++ prototype and run instructions](prototype/README.md) ·
 [Implementation and test report](implementation-report.md) ·
 [Expiration implementation and results](expiration-report.md) ·
 [Poll and epoll flags](epoll-flags.md)
+
+Memory limits: [design and behavior](memory-limits-design.md) ·
+[implementation and results](memory-limits-report.md).
 
 1. [Scope](scope.md)
 2. Steps 2–3: [Requirements and capacity estimates](requirements-and-capacity.md)

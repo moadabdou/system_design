@@ -1,8 +1,8 @@
 # C++ Key-Value Store
 
 This implementation covers one single-threaded, in-memory TCP server with
-GET, SET, DEL, and key expiration. PING is a small readiness command used by the
-client and tests. Eviction, persistence, replication, failover, and sharding are
+GET, SET, DEL, key expiration, memory limits, and optional LRU eviction. PING is
+a small readiness command used by the client and tests. Persistence, replication, failover, and sharding are
 deferred study phases documented in [the study outlines](../README.md#study-documents).
 
 ## Build and Run
@@ -25,8 +25,23 @@ python3 tools/client.py DEL greeting
 python3 tools/client.py SET temporary hello PX 1000
 ```
 
-`--port` is the only configuration option. The server binds to `127.0.0.1` and
-starts with an empty hash table. Stopping the process loses all stored data.
+The server binds to `127.0.0.1` and starts with an empty hash table. Stopping the
+process loses all stored data.
+
+| Option | Default |
+| --- | --- |
+| `--port` | `6380` |
+| `--memory` | `67108864` bytes (64 MiB accounted dataset budget) |
+| `--policy` | `noeviction`; optionally `allkeys-lru` |
+
+For example, enable LRU with a 1 MiB dataset budget:
+
+```sh
+./build/study-store --port 6380 --memory 1048576 --policy allkeys-lru
+```
+
+See [memory accounting and eviction](../memory-limits-design.md). The dataset
+budget excludes client buffers and temporary allocations; it is not an RSS limit.
 
 ## Read the Code
 
@@ -52,12 +67,12 @@ updates, partial I/O, and connection shutdown behavior.
 
 | Files | Responsibility |
 | --- | --- |
-| [config.cpp](src/config.cpp) | Parse and validate the port before constructing the server |
+| [config.cpp](src/config.cpp) | Validate the port, memory budget, and eviction policy before startup |
 | [server.hpp](src/server.hpp), [server.cpp](src/server.cpp) | Own connections and storage; run the event loop |
 | [connection.hpp](src/connection.hpp), [server_network.cpp](src/server_network.cpp) | Per-client buffers, epoll registration, acceptance, partial reads/writes, and disconnects |
 | [protocol.cpp](src/protocol.cpp) | Parse RESP arrays of bulk strings and encode replies |
 | [server_commands.cpp](src/server_commands.cpp) | Validate and execute PING, GET, SET, and DEL |
-| [store.hpp](src/store.hpp), [store.cpp](src/store.cpp) | Values, monotonic deadlines, access-time expiration, and bounded periodic cleanup |
+| [store.hpp](src/store.hpp), [store.cpp](src/store.cpp) | Values, deadlines, memory accounting, write admission, and LRU eviction |
 | [common.hpp](src/common.hpp), [common.cpp](src/common.cpp) | Size limits, argument type, and integer parsing |
 
 ## Supported Behavior
@@ -74,12 +89,14 @@ updates, partial I/O, and connection shutdown behavior.
 - Values are limited to 1 MiB, keys to 4 KiB, each input/output buffer to 8 MiB,
   and accepted connections to 256. These are request/connection bounds, not a dataset memory policy.
 - Reads, writes, accepts, and command execution have per-pass budgets for fairness.
+- SET reclaims/selects at most 128 entries to make room. Capacity or work-limit
+  errors return `-OOM` and preserve live entries and the connection. `noeviction`
+  rejects growth when full; `allkeys-lru` can remove live keys to admit a write.
 - Malformed framing returns an error and closes the connection. Invalid commands
   return an error without changing data, and the connection remains usable.
 
-The dataset grows until keys are deleted, expire, or process resources run out.
-A reply confirms an in-memory operation only. There is no dataset memory limit
-or administrative storage/distribution protocol in this implementation.
+A reply confirms an in-memory operation only. Eviction may remove a key before
+its TTL. There is no administrative storage/distribution protocol.
 
 ## Verify
 
@@ -91,12 +108,13 @@ cmake --build build-asan -j2
 ctest --test-dir build-asan -V
 ```
 
-Tests cover deterministic expiration boundaries, bounded cleanup, TTL replacement
+Tests cover memory accounting, rejected replacements, LRU order, allocation
+failure rollback, deterministic expiration boundaries, bounded cleanup, TTL replacement
 and validation, the commands, binary values, single OS-thread execution, fragmented
 requests, pipelines, half-close, concurrent/slow clients, large replies, invalid
 input, abrupt disconnects, and data loss on restart. They also check that deferred
-features are unavailable. Each test uses temporary localhost servers and cleans
-them up. See [the report](../implementation-report.md) for recorded results.
+features are unavailable. Integration tests use temporary localhost servers and
+clean them up. See [the current memory report](../memory-limits-report.md) for results.
 
 For initial throughput, GET latency, and process-memory observations:
 
@@ -116,6 +134,17 @@ python3 tools/expiration_burst.py build/study-store
 
 See [the expiration report](../expiration-report.md) for the design, reclamation
 checks, latency observations, and RSS limitations.
+
+For direct store pressure measurements (no TCP):
+
+```sh
+./build/memory-pressure noeviction uniform
+./build/memory-pressure allkeys-lru skewed
+./build/memory-pressure allkeys-lru burst
+./build/memory-pressure allkeys-lru large
+```
+
+See [memory pressure results](../memory-limits-report.md) for workload details.
 
 Formatting is defined in [.clang-format](.clang-format):
 

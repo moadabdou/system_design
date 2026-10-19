@@ -282,6 +282,8 @@ void Server::process_input(Connection &connection) {
             dispatch_command(connection, arguments);
         } catch (const std::bad_alloc &) {
             throw;
+        } catch (const MemoryError &error) {
+            queue_reply(connection, "-OOM " + std::string(error.what()) + "\r\n");
         } catch (const std::exception &error) {
             queue_reply(connection, "-ERR " + std::string(error.what()) + "\r\n");
         }

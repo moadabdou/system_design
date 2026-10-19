@@ -7,7 +7,8 @@ namespace study {
 namespace {
 constexpr std::size_t EXPIRATIONS_PER_PASS = 128;
 }
-Server::Server(Config config) : config_(std::move(config)) {
+Server::Server(Config config)
+    : config_(std::move(config)), store_(config_.memory_limit, config_.memory_policy) {
     initialize_listener();
 }
 
