@@ -256,7 +256,46 @@ cmake --build build-asan -j2
 ctest --test-dir build-asan -V
 ```
 
-Tests start temporary localhost servers and clean them up. Throughput, p99
-latency, and the ten-million-key capacity assumptions have not been validated
-for this baseline. The earlier benchmarks for the expanded implementation do
-not describe this prototype and have been removed.
+Tests start temporary localhost servers and clean them up. The earlier benchmarks
+for the expanded implementation do not describe this prototype and have been
+removed.
+
+## Initial Performance and Memory Observations
+
+The [baseline tool](prototype/tools/baseline.py) starts a fresh temporary server,
+loads 10,000 distinct 32-byte keys with 1 KiB values in batches of 32 SETs, then
+performs 100 warmup GETs and 5,000 measured GET hits without pipelining. It checks
+every SET acknowledgment and every warmup/measured GET value. A failed command,
+value mismatch, timeout, or abnormal server exit fails the experiment. Timing
+results are observations, without a performance pass/fail threshold.
+
+Recorded on 2026-10-19 against server source revision `b5b9cfb`, built with CMake
+Release and GCC 16.2.1. The host was Linux x86-64, Intel Core i5-1135G7, eight
+logical CPUs, and approximately 7.48 GiB RAM. The server runs one OS thread; the
+Python client runs separately on the same machine over localhost TCP.
+
+| Observation | Result |
+| --- | --- |
+| SET throughput, pipeline depth 32 | 240,307 commands/s |
+| GET throughput, pipeline depth 1, all hits | 61,858 commands/s |
+| GET client-observed p50 / p99 | 0.0152 / 0.0369 ms |
+| Server RSS before / after loading | 4,169,728 / 16,130,048 bytes |
+| RSS growth per inserted key | Approximately 1,196 bytes |
+
+RSS is read from `/proc/<pid>/status` on the same connection before and after
+loading. Its growth includes allocator, hash-table, and buffer effects; it is
+not exact entry accounting or an enforced memory budget. Client timing includes
+request encoding, socket I/O, server work, reply parsing, and Python overhead.
+
+Reproduce from `redis/prototype/` after the Release build above:
+
+```sh
+python3 tools/baseline.py build/study-store --keys 10000 --requests 5000 --value-bytes 1024
+```
+
+The [recorded JSON](prototype/results/step4-baseline.json) includes workload,
+machine, revision, and measurements. This single short run is an initial
+observation: the 90/9/1 command mix, 95% GET hit rate, sustained peak load,
+ten-million-key dataset, concurrent clients, and local-network latency targets
+remain unvalidated. The pipelined SET and sequential GET rates describe different
+workloads and should not be compared as command execution costs.

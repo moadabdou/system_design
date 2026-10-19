@@ -90,6 +90,16 @@ input, abrupt disconnects, and data loss on restart. They also check that deferr
 features are unavailable. Each test uses temporary localhost servers and cleans
 them up. See [the report](../implementation-report.md) for recorded results.
 
+For initial throughput, GET latency, and process-memory observations:
+
+```sh
+python3 tools/baseline.py build/study-store --keys 10000 --requests 5000 --value-bytes 1024
+```
+
+This starts a temporary server and verifies replies. See the
+[baseline results and limitations](../implementation-report.md#initial-performance-and-memory-observations);
+it does not validate the full study's capacity or peak-load targets.
+
 Formatting is defined in [.clang-format](.clang-format):
 
 ```sh
