@@ -1,12 +1,14 @@
 # Redis — System Design Case Study
 
-The current implementation covers **step 4 only**: a minimal single-threaded TCP
-store with GET, SET, and DEL. Later phases below are study outlines and future work.
+The current implementation covers the minimal single-threaded TCP store and
+key expiration: GET, SET (optionally PX), and DEL. Dataset memory limits,
+eviction, persistence, replication, and sharding remain future work.
 
 ## Study Documents
 
 Implementation: [C++ prototype and run instructions](prototype/README.md) ·
 [Implementation and test report](implementation-report.md) ·
+[Expiration implementation and results](expiration-report.md) ·
 [Poll and epoll flags](epoll-flags.md)
 
 1. [Scope](scope.md)

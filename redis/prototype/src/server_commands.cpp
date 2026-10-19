@@ -13,7 +13,7 @@ void Server::dispatch_command(Connection &connection, const Arguments &arguments
         throw std::runtime_error("unknown command");
     }
     const std::size_t expected_arguments = operation == "SET" ? 3 : 2;
-    if (arguments.size() != expected_arguments) {
+    if (arguments.size() != expected_arguments && !(operation == "SET" && arguments.size() == 5)) {
         throw std::runtime_error("wrong arity");
     }
 
@@ -31,7 +31,14 @@ void Server::dispatch_command(Connection &connection, const Arguments &arguments
         if (value.size() > MAX_VALUE) {
             throw std::runtime_error("value exceeds 1 MiB");
         }
-        store_.set(key, value);
+        std::optional<std::chrono::milliseconds> ttl;
+        if (arguments.size() == 5) {
+            if (arguments[3] != "PX") {
+                throw std::runtime_error("unsupported SET option; expected PX");
+            }
+            ttl = std::chrono::milliseconds{parse_integer(arguments[4])};
+        }
+        store_.set(key, value, ttl);
         queue_reply(connection, "+OK\r\n");
     }
 }

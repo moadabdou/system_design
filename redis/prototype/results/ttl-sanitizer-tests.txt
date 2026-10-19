@@ -1,0 +1,41 @@
+UpdateCTestConfiguration  from :/tmp/system-design-ttl-asan/DartConfiguration.tcl
+Test project /tmp/system-design-ttl-asan
+Constructing a list of tests
+Done constructing a list of tests
+Updating test list for fixtures
+Added 0 tests to meet fixture requirements
+Checking test dependency graph...
+Checking test dependency graph end
+test 1
+    Start 1: store-expiration
+
+1: Test command: /tmp/system-design-ttl-asan/store-expiration-tests
+1: Working Directory: /tmp/system-design-ttl-asan
+1: Test timeout computed to be: 10000000
+1: Expiration boundaries, replacements, validation, and bounded reclamation passed
+1/2 Test #1: store-expiration .................   Passed    0.07 sec
+test 2
+    Start 2: integration
+
+2: Test command: /home/moadabdou/miniconda3/bin/python3.13 "/home/moadabdou/coding/serious_projects/system_design/redis/prototype/tests/integration.py" "/tmp/system-design-ttl-asan/study-store"
+2: Working Directory: /tmp/system-design-ttl-asan
+2: Test timeout computed to be: 60
+2: test_01_string_commands_and_single_thread (__main__.Integration.test_01_string_commands_and_single_thread) ... ok
+2: test_02_fragmentation_pipeline_order_and_half_close (__main__.Integration.test_02_fragmentation_pipeline_order_and_half_close) ... ok
+2: test_03_malformed_and_truncated_frames (__main__.Integration.test_03_malformed_and_truncated_frames) ... ok
+2: test_04_concurrent_idle_and_slow_clients (__main__.Integration.test_04_concurrent_idle_and_slow_clients) ... ok
+2: test_05_command_validation_preserves_existing_value (__main__.Integration.test_05_command_validation_preserves_existing_value) ... ok
+2: test_06_abrupt_disconnect_and_reused_descriptors (__main__.Integration.test_06_abrupt_disconnect_and_reused_descriptors) ... ok
+2: test_07_restart_starts_with_empty_memory (__main__.Integration.test_07_restart_starts_with_empty_memory) ... ok
+2: test_08_cli_and_later_phase_features_are_unavailable (__main__.Integration.test_08_cli_and_later_phase_features_are_unavailable) ... ok
+2: test_expiration_and_invalid_ttl_preserve_values (__main__.Integration.test_expiration_and_invalid_ttl_preserve_values) ... ok
+2:
+2: ----------------------------------------------------------------------
+2: Ran 9 tests in 0.757s
+2:
+2: OK
+2/2 Test #2: integration ......................   Passed    0.82 sec
+
+100% tests passed out of 2
+
+Total Test time (real) =   0.89 sec

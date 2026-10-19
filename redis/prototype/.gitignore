@@ -5,3 +5,4 @@
 # Files produced by an in-source build
 /Makefile
 /study-store
+/store-expiration-tests

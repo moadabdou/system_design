@@ -1,5 +1,9 @@
 # Step 4: Implementation and Test Report
 
+This report records the minimal baseline before expiration. The current
+[expiration extension and its results](expiration-report.md) are documented
+separately; the source now includes SET PX and a bounded expiration pass.
+
 ## Implemented Scope
 
 The [C++ prototype](prototype/README.md) implements the minimal single-node design:

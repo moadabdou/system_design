@@ -164,12 +164,50 @@ class Integration(unittest.TestCase):
                 ("SET", "keep"), ("GET",), ("DEL", "keep", "extra"), ("BOGUS",),
                 ("SET", "keep", b"x" * (1024 * 1024 + 1)),
                 ("SET", "k" * 4097, "v"),
-                ("SET", "keep", "new", "PX", "1000"),
+                ("SET", "keep", "new", "EX", "1000"),
             ]
             for parts in invalid:
                 with self.subTest(command=parts[0]), self.assertRaises(StoreError):
                     client.command(*parts)
                 self.assertEqual(client.command("GET", "keep"), b"old")
+
+    def test_expiration_and_invalid_ttl_preserve_values(self):
+        server = self.server()
+        with Client(server.address) as client:
+            self.assertEqual(client.command("SET", "expiring", "v", "PX", 30), b"OK")
+            time.sleep(0.08)
+            self.assertIsNone(client.command("GET", "expiring"))
+            self.assertEqual(client.command("DEL", "expiring"), 0)
+            client.command("SET", "deleted", "v", "PX", 30)
+            time.sleep(0.08)
+            self.assertEqual(client.command("DEL", "deleted"), 0)
+            client.command("SET", "persistent", "old", "PX", 30)
+            client.command("SET", "persistent", "new")
+            time.sleep(0.08)
+            self.assertEqual(client.command("GET", "persistent"), b"new")
+            client.command("SET", "keep", "original", "PX", 5000)
+            invalid = ["0", "-1", "1.5", "invalid", "31536000001",
+                       "9223372036854775807", "9223372036854775808", ""]
+            for ttl in invalid:
+                with self.subTest(ttl=ttl), self.assertRaises(StoreError):
+                    client.command("SET", "keep", "bad", "PX", ttl)
+                self.assertEqual(client.command("GET", "keep"), b"original")
+            for parts in [("SET", "keep", "bad", "PX"),
+                          ("SET", "keep", "bad", "px", 10),
+                          ("SET", "keep", "bad", "PX", 10, "extra")]:
+                with self.subTest(parts=parts), self.assertRaises(StoreError):
+                    client.command(*parts)
+                self.assertEqual(client.command("GET", "keep"), b"original")
+            client.command("SET", "keep", "short", "PX", 30)
+            time.sleep(0.08)
+            self.assertIsNone(client.command("GET", "keep"))
+            client.socket.sendall(encode("SET", "pipeline", "v", "PX", 5000) +
+                                  encode("GET", "pipeline") + encode("DEL", "pipeline"))
+            client.socket.shutdown(socket.SHUT_WR)
+            self.assertEqual(read(client.stream), b"OK")
+            self.assertEqual(read(client.stream), b"v")
+            self.assertEqual(read(client.stream), 1)
+            self.assertEqual(client.stream.read(1), b"")
 
     def test_06_abrupt_disconnect_and_reused_descriptors(self):
         server = self.server()

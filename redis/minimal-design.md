@@ -5,8 +5,9 @@ paths. The [C++ prototype](prototype/README.md) implements this baseline; the
 [report](implementation-report.md) records its verification.
 
 The first implementation supports GET, SET, and DEL over nonblocking TCP, plus
-PING for readiness. Expiration, eviction, persistence, replication, and sharding
-remain later study phases. The broader [requirements](requirements-and-capacity.md)
+PING for readiness. The current prototype also adds
+[key expiration](expiration-report.md). Eviction, persistence, replication, and
+sharding remain later study phases. The broader [requirements](requirements-and-capacity.md)
 provide context for those later phases.
 
 ## Architecture
@@ -48,6 +49,11 @@ key bytes -> value bytes
 - `SET key value`: create or replace a value, then acknowledge success.
 - `DEL key`: remove the key and return 1, or return 0 if absent.
 - `PING`: return PONG for readiness checks.
+
+The expiration extension adds an optional deadline index entry per stored value.
+`SET key value PX milliseconds` assigns a monotonic deadline; SET without PX
+clears it. Expired keys are absent for GET and DEL. See the
+[expiration decision](design-tradeoffs.md#key-expiration-decision-issue-2).
 
 Validate command arity and key/value sizes before accessing or mutating storage.
 Each command executes completely before another begins. Commands on one connection
@@ -108,7 +114,7 @@ A successful SET confirms an update in memory. A crash or restart loses the
 entire dataset. Losing the connection before a response leaves the command's
 outcome uncertain to the client.
 
-The dataset has no configured capacity or eviction policy. TTLs, bounded dataset
+The dataset has no configured capacity or eviction policy. Bounded dataset
 memory, persistence, replication/failover, and sharding belong to the
 [following phases](design-tradeoffs.md). They have documentation outlines and
 future issues, with no implementation hooks in this baseline.

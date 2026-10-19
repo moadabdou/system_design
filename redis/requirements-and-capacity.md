@@ -8,8 +8,9 @@ The numbers below are initial study assumptions, not measured Redis performance
 or guarantees. Revise them as experiments provide evidence.
 
 These requirements cover the full study. The first prototype implements only
-GET, SET, and DEL over a single-threaded TCP server. TTLs, dataset memory policies,
-persistence, replication, and sharding are deferred to later phases.
+GET, SET, and DEL over a single-threaded TCP server. The current prototype also
+supports TTLs through SET PX. Dataset memory policies, persistence, replication,
+and sharding are deferred to later phases.
 
 ## Functional Requirements
 

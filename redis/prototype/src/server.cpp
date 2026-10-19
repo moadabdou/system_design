@@ -4,6 +4,9 @@
 #include <utility>
 
 namespace study {
+namespace {
+constexpr std::size_t EXPIRATIONS_PER_PASS = 128;
+}
 Server::Server(Config config) : config_(std::move(config)) {
     initialize_listener();
 }
@@ -26,6 +29,7 @@ void Server::run(const volatile std::sig_atomic_t &running) {
     while (running) {
         poll_network();
         drain_buffered_commands();
+        store_.expire_due(EXPIRATIONS_PER_PASS);
     }
 }
 } // namespace study
